@@ -9,6 +9,7 @@
 [[ -z "${MOUNTPOINT}" ]] && echo "MOUNTPOINT variable unset." && exit 1
 [[ -z "${VOLUME_NAME}" ]] && echo "VOLUME_NAME variable unset." && exit 1
 [[ -z "${VOLUME_SIZE}" ]] && echo "VOLUME_SIZE variable unset." && exit 1
+[[ -z "${AUTOMOUNT}" ]] && echo "AUTOMOUNT variable unset." && exit 1
 
 root() {
     # Check for root
@@ -28,30 +29,14 @@ create() {
 automount() {
     root
     attach
-    cat << EOF > /tmp/com.workspace.plist
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-    <dict>
-        <key>RunAtLoad</key>
-        <true/>
-        <key>Label</key>
-        <string>com.workspace</string>
-        <key>ProgramArguments</key>
-        <array>
-            <string>hdiutil</string>
-            <string>attach</string>
-            <string>-notremovable</string>
-            <string>-nobrowse</string>
-            <string>-mountpoint</string>
-            <string>${MOUNTPOINT}</string>
-            <string>${WORKSPACE}</string>
-        </array>
-    </dict>
-</plist>
-EOF
-    cp /tmp/com.workspace.plist /Library/LaunchDaemons/com.workspace.plist
-    rm /tmp/com.workspace.plist
+
+    # Prepare the automount script
+    sed "s#<<MOUNTPOINT>>#${MOUNTPOINT}#g" templates/automount.sh > ${AUTOMOUNT}/automount.1
+    sed "s#<<WORKSPACE>>#${WORKSPACE}#g" ${AUTOMOUNT}/automount.1 > ${AUTOMOUNT}/automount.sh
+    chmod +x ${AUTOMOUNT}/automount.sh
+
+    # Install the LaunchDaemon plist
+    sed "s#<<AUTOMOUNT>>#${AUTOMOUNT}/automount.sh#g" templates/com.workspace.plist > /Library/LaunchDaemons/com.workspace.plist
 }
 
 # Unmount the workspace volume
@@ -83,16 +68,20 @@ if [[ $1 == "install" ]]; then
 
     # Step 1 Create the Volume
     echo -n "Creating case-insensitive volume ... "
-    [[ ! -f "${WORKSPACE}" ]] && create
-    echo "done."
+    [[ -f "${WORKSPACE}" ]] && echo "Already Exists"
+    [[ ! -f "${WORKSPACE}" ]] && create && echo "done."
 
     # Step 2 Mount the Volume
     echo -n "Mounting the volume ... "
     m=$(hdiutil info | grep "${MOUNTPOINT}" | cut -f1)
-    [[ -z $m ]] && attach
-    echo "done."
+    [[ -z $m ]] && attach && echo "done."
+    [[ ! -z $m ]] && echo "already mounted."
 
     # Step 3 Automount Enable
+
+    m=$(hdiutil info | grep "${MOUNTPOINT}" | cut -f1)
+    [[ -z $m ]] && echo "MOUNT FAILED, CANNOT ENABLE AUTOMOUNT." && exit 1
+
     echo -n "Enabling mount at boot ... "
     automount
     echo "done."
