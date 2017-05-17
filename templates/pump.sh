@@ -23,6 +23,7 @@ attach() {
     root
 
     m=$(hdiutil info | grep "${MOUNTPOINT}" | cut -f1)
+    d=$(echo "$m" | cut -ds -f1,2)
     echo "Identified volume: $m"
     if [ -z "$m" ]; then
 
@@ -31,13 +32,15 @@ attach() {
               [[ -f "${WORKSPACE}" ]] && break
         done
 
-        # Clean up the workspace volume
-        [[ ${COMPACT} -eq 1 ]] && hdiutil compact "${WORKSPACE}" -batteryallowed
-
         # Create the mountpoint if required
         [[ -d "${MOUNTPOINT}" ]] && mkdir -p "${MOUNTPOINT}"
 
-        hdiutil attach -notremovable -nobrowse -mountpoint "${MOUNTPOINT}" "${WORKSPACE}"
+        hdiutil attach -nobrowse -mountpoint "${MOUNTPOINT}" "${WORKSPACE}" && echo "Volume has been mounted."
+
+        # Clean up the workspace volume
+        m=$(hdiutil info | grep "${MOUNTPOINT}" | cut -f1)
+        d=$(echo "$m" | cut -ds -f1,2)
+        [[ ${COMPACT} -eq 1 ]] && hdiutil compact "${d}" -batteryallowed
 
     else
 

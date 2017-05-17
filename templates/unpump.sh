@@ -20,10 +20,10 @@ root() {
 detach() {
     root
     m=$(hdiutil info | grep "${MOUNTPOINT}" | cut -f1)
+    d=$(echo "$m" | cut -ds -f1,2)
     echo "Identified volume: $m"
     if [ ! -z "$m" ]; then
-        hdiutil detach $m
-        hdiutil eject $m
+        hdiutil detach "$d" 2>/dev/null
     else
         echo "The volume does not seem to be mounted."
     fi
