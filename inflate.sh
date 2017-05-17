@@ -30,23 +30,19 @@ automount() {
     root
     attach
 
-    # Prepare the automount script
-    sed "s#<<MOUNTPOINT>>#${MOUNTPOINT}#g" templates/automount.sh > ${AUTOMOUNT}/automount.1
-    sed "s#<<WORKSPACE>>#${WORKSPACE}#g" ${AUTOMOUNT}/automount.1 > ${AUTOMOUNT}/automount.sh
-    chmod +x ${AUTOMOUNT}/automount.sh
+    # Prepare the pump script
+    sudo -u $SUDO_USER bash -c "sed \"s#<<MOUNTPOINT>>#${MOUNTPOINT}#g\" templates/pump.sh > ${AUTOMOUNT}/pump.1"
+    sudo -u $SUDO_USER bash -c "sed \"s#<<WORKSPACE>>#${WORKSPACE}#g\" ${AUTOMOUNT}/pump.1 > ${AUTOMOUNT}/pump.sh"
+    rm ${AUTOMOUNT}/pump.1
+    chmod +x ${AUTOMOUNT}/pump.sh
+
+    # Prepare the unpump script
+    sudo -u $SUDO_USER bash -c "sed \"s#<<MOUNTPOINT>>#${MOUNTPOINT}#g\" templates/unpump.sh > ${AUTOMOUNT}/unpump.sh"
+    chmod +x ${AUTOMOUNT}/unpump.sh
+
 
     # Install the LaunchDaemon plist
-    sed "s#<<AUTOMOUNT>>#${AUTOMOUNT}/automount.sh#g" templates/com.workspace.plist > /Library/LaunchDaemons/com.workspace.plist
-}
-
-# Unmount the workspace volume
-detach() {
-    m=$(hdiutil info | grep "${MOUNTPOINT}" | cut -f1)
-    echo "Identified volume: $m"
-    if [ ! -z "$m" ]; then
-        hdiutil detach $m
-        hdiutil eject $m
-    fi
+    sed "s#<<AUTOMOUNT>>#${AUTOMOUNT}/pump.sh#g" templates/com.workspace.plist > /Library/LaunchDaemons/com.workspace.plist
 }
 
 # Mount the workspace volume
@@ -54,13 +50,6 @@ attach() {
     root
     [[ -d "${MOUNTPOINT}" ]] && sudo -u $SUDO_USER mkdir -p "${MOUNTPOINT}"
     hdiutil attach -notremovable -nobrowse -mountpoint "${MOUNTPOINT}" "${WORKSPACE}"
-}
-
-# Clean up the workspace volume
-compact() {
-    detach
-    hdiutil compact "${WORKSPACE}" -batteryallowed
-    attach
 }
 
 if [[ $1 == "install" ]]; then
@@ -118,5 +107,5 @@ if [[ $1 == "remove" ]]; then
 fi
 
 echo "Usage:"
-echo "sudo -E ./pump.sh install"
-echo "sudo -E ./pump.sh remove"
+echo "sudo -E ./inflate.sh install"
+echo "sudo -E ./inflate.sh remove"

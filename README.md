@@ -20,7 +20,7 @@ You'll need to set a couple of important environment variables:
 2.  MOUNTPOINT -- The location where the image file will be mounted.
 3.  VOLUME_NAME -- The name of the volume itself (how OSX will present it.)
 4.  VOLUME_SIZE -- The size of the volume.
-5.  AUTOMOUNT -- The location to install the automount script that will be executed on system start. (see example.)
+5.  AUTOMOUNT -- The location to install the automount script that will be executed on system start. (A script to mount and unmount the volume will be installed at this location.)
 
 <b>Note: Use ```sudo -E``` to ensure the variables are passed to the sudo environment.</b>
 
@@ -32,5 +32,10 @@ You'll need to set a couple of important environment variables:
     export VOLUME_NAME="workspace"
     export VOLUME_SIZE="10g"
     export AUTOMOUNT="${HOME}/bin"
-    sudo -E ./pump.sh install
+    sudo -E ./inflate.sh install
 ```
+
+## Everyday Use:
+
+Your volume will now be attached each time you boot up your machine.<br>
+If you find you need to occasionally unmount the volume, a ```unpump.sh``` script will be installed at the ```AUTOMOUNT``` location to facilitate this use case.
