@@ -52,7 +52,7 @@ detach() {
 # Mount the workspace volume
 attach() {
     root
-    [[ -d "${MOUNTPOINT}" ]] && mkdir -p "${MOUNTPOINT}"
+    [[ -d "${MOUNTPOINT}" ]] && sudo -u $SUDO_USER mkdir -p "${MOUNTPOINT}"
     hdiutil attach -notremovable -nobrowse -mountpoint "${MOUNTPOINT}" "${WORKSPACE}"
 }
 
