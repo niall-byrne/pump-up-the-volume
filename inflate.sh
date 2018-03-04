@@ -56,7 +56,7 @@ if [[ $1 == "install" ]]; then
     echo "This will install the volume to ${MOUNTPOINT}"
 
     # Step 1 Create the Volume
-    echo -n "Creating case-insensitive volume ... "
+    echo -n "Creating case-sensitive volume ... "
     [[ -f "${WORKSPACE}" ]] && echo "Already Exists"
     [[ ! -f "${WORKSPACE}" ]] && create && echo "done."
 
